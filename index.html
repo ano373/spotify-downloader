@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify Web API Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous">
+    <link href="style.css" rel="stylesheet">
+    <script type="module" src="auth.js" defer></script>
+    <script type="module" src="requests.js" defer></script>
+</head>
+
+<body>
+    <div class="container">
+
+        <div id="tokenSection" class="row">
+            <div class="col">
+                <div class="mb-3">
+                    <label for="clientId" class="form-label">Client ID</label>
+                    <input type="text" class="form-control" id="clientId" placeholder="">
+                </div>
+                <div class="mb-3">
+                    <label for="clientSecret" class="form-label">Client Secret</label>
+                    <input type="text" class="form-control" id="clientSecret" placeholder="">
+                </div>
+                <button class="btn btn-primary btn-lg" id= "requestAuthButton">Request Authorization</button>
+            </div>
+
+           
+        </div>
+
+        <div id="deviceSection" class="row">
+            <div class="col">
+                <div class="mb-3">
+                    <label for="offset" class="form-label">offset</label>
+                    <input type="number" class="form-control" id="offset" min="0" placeholder="">
+                </div>
+                <div class="mb-3">
+                    <label for="clientId" class="form-label">limit</label>
+                    <input type="number" class="form-control" id="limit" min="1" max="50" placeholder="">
+                </div>
+                <button id="fetchTracksButton">Fetch liked songs</button>
+            </div>
+        </div>
+    </div>
+
+
+</body>
+
+</html>

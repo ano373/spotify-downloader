@@ -1,0 +1,60 @@
+/* CSS HEX 
+--black-chocolate: #131200ff;
+--mantis: #78bc61ff;
+--dark-khaki: #c0c781ff;
+--camel: #c59b76ff;
+--salmon: #e9806eff;
+*/
+
+body{
+    background-color: #c0c781ff;
+}
+
+#tokenSection{
+    display: none;
+}
+
+#deviceSection{
+    display: none;
+}
+
+.container{
+    padding: 20px;    
+    background-color: #78bc61ff;
+}
+
+
+
+.welcomeText{
+    font-size:2em;
+}
+
+
+#fetchTracksButton {
+    display: block;             
+    margin: 0 auto;             
+    padding: 10px 20px;         
+    font-size: 16px;            
+    font-weight: bold;          
+    color: #ffffff;             
+    background-color: #007bff;  
+    border: none;               
+    border-radius: 5px;        
+    cursor: pointer;            
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); 
+    transition: all 0.3s ease;  
+}
+
+/* Hover effect */
+#fetchTracksButton:hover {
+    background-color: #0056b3;  /* Darker blue on hover */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2); /* Increase shadow for a pop effect */
+    transform: translateY(-2px); /* Slight upward movement */
+}
+
+/* Active (clicked) effect */
+#fetchTracksButton:active {
+    background-color: #003f7f;  /* Even darker blue when clicked */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Decrease shadow */
+    transform: translateY(2px); /* Move downward slightly */
+}
