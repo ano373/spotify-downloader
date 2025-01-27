@@ -1,3 +1,4 @@
+import { constructUrl, setlocalStorage, getlocalStorage } from "./utils.js";
 var redirect_uri = "http://127.0.0.1:5500/index.html";
  
 
@@ -8,14 +9,14 @@ var access_token = null;
 var refresh_token = null;
 
 
-const AUTHORIZE = "https://accounts.spotify.com/authorize"
-const TOKEN = "https://accounts.spotify.com/api/token";
 
 
-window.addEventListener("load",onPageLoad);
 
 window.addEventListener("DOMContentLoaded", () =>{
+    onPageLoad();
+});
 
+window.addEventListener("DOMContentLoaded", () =>{
     const requestbtn = document.getElementById("requestAuthButton");
     requestbtn.addEventListener("click",requestAuthorization);
     
@@ -24,30 +25,32 @@ window.addEventListener("DOMContentLoaded", () =>{
 });
 
 
+function updateUI(access_token){
+    if ( access_token == null ){
+        document.getElementById("tokenSection").style.display = 'block';  
+    }
+    else {
+        document.getElementById("deviceSection").style.display = 'block';  
+        
+    }
+}
+
 function onPageLoad(){
-    client_id = localStorage.getItem("client_id");
-    client_secret = localStorage.getItem("client_secret");
+    client_id =  getlocalStorage("client_id");
+    client_secret = getlocalStorage("client_secret");
     if ( window.location.search.length > 0 ){
         handleRedirect();
     }
     else{
-        access_token = localStorage.getItem("access_token");
-        if ( access_token == null ){
-            // we don't have an access token so present token section
-            document.getElementById("tokenSection").style.display = 'block';  
-        }
-        else {
-            // we have an access token so present device section
-            document.getElementById("deviceSection").style.display = 'block';  
-            
-        }
+        access_token = getlocalStorage("access_token");
+        updateUI(access_token);
     }
 }
 
 function handleRedirect(){
     let code = getCode();
-    fetchAccessToken( code );
-    window.history.pushState("", "", redirect_uri); // remove param from url
+    exhangeCodeToToken(code);
+    window.history.pushState("", "", redirect_uri);
 }
 
 function getCode(){
@@ -63,91 +66,96 @@ function getCode(){
 function requestAuthorization(){
     client_id = document.getElementById("clientId").value;
     client_secret = document.getElementById("clientSecret").value;
-    localStorage.setItem("client_id", client_id);
-    localStorage.setItem("client_secret", client_secret); 
+    setlocalStorage("client_id", client_id);
+    setlocalStorage("client_secret", client_secret); 
+    const AUTHORIZE = "https://accounts.spotify.com/authorize"
+    const baseUrl = AUTHORIZE;
+    const params = new URLSearchParams({
+        client_id       : client_id,
+        response_type   : "code",
+        redirect_uri    : redirect_uri,
+        show_dialog     : true,
+        scope            : "user-library-read"
 
-    let url = AUTHORIZE;
-    url += "?client_id=" + client_id;
-    url += "&response_type=code";
-    url += "&redirect_uri=" + encodeURI(redirect_uri);
-    url += "&show_dialog=true";
-    url += "&scope=user-library-read ";
+    }).toString();
+    const url = constructUrl(baseUrl,params);
     window.location.href = url; 
 }
 
-function fetchAccessToken( code ){
-    let body = "grant_type=authorization_code";
-    body += "&code=" + code; 
-    body += "&redirect_uri=" + encodeURI(redirect_uri);
-    body += "&client_id=" + client_id;
-    body += "&client_secret=" + client_secret;
+function exhangeCodeToToken( code ){   
+    const body = new URLSearchParams({
+        grant_type : "authorization_code",
+        code       : code,
+        redirect_uri : redirect_uri,
+        client_id   : client_id,
+        client_secret : client_secret
+    }).toString();
     callAuthorizationApi(body);
 }
 
-let  refreshAccessToken = function () {
-    console.log("refresh called")
-    refresh_token = localStorage.getItem("refresh_token");
-    let body = "grant_type=refresh_token";
-    body += "&refresh_token=" + refresh_token;
-    body += "&client_id=" + client_id;
+let refreshAccessToken = function () {
+    console.log("refresh called");
+    const refresh_token = localStorage.getItem("refresh_token");
+    const body = new URLSearchParams({
+        grant_type: "refresh_token",
+        refresh_token: refresh_token,
+        client_id: client_id
+    }).toString();
+
     callAuthorizationApi(body);
 }
 
-function callAuthorizationApi(body){
-    let xhr = new XMLHttpRequest();
-    xhr.open("POST", TOKEN, true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-    xhr.setRequestHeader('Authorization', 'Basic ' + btoa(client_id + ":" + client_secret));
-    xhr.send(body);
-    xhr.onload = handleAuthorizationResponse;
+async function callAuthorizationApi(body) {
+    try {
+        const TOKEN = "https://accounts.spotify.com/api/token";
+        const response = await fetch(TOKEN, {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'Authorization': 'Basic ' + btoa(client_id + ":" + client_secret)
+            },
+            body: body
+        });
+
+        if (!response.ok) {
+            console.error("Authorization API call failed:", response.statusText);
+            return;
+        }
+
+        const data = await response.json();
+        handleAuthorizationResponse(data);
+    } catch (error) {
+        console.error("Error while calling Authorization API:", error);
+    }
 }
 
-function handleAuthorizationResponse(){
-    if ( this.status == 200 ){
-        var data = JSON.parse(this.responseText);
+
+function handleAuthorizationResponse(data) {
+    if (data && data.access_token) {
         console.log(data);
-        var data = JSON.parse(this.responseText);
-        if ( data.access_token != undefined ){
+
+        if (data.access_token !== undefined) {
             access_token = data.access_token;
-            localStorage.setItem("access_token", access_token);
+            setlocalStorage("access_token", access_token);
         }
-        if ( data.refresh_token  != undefined ){
+
+        if (data.refresh_token !== undefined) {
             refresh_token = data.refresh_token;
-            localStorage.setItem("refresh_token", refresh_token);
+            setlocalStorage("refresh_token", refresh_token);
         }
+
         onPageLoad();
-    }
-    else {
-        console.log(this.responseText);
-        alert(this.responseText);
+    } else {
+        console.log("Authorization failed:", data);
+        alert("Authorization failed: " + (data ? data.error_description || 'Unknown error' : 'No data'));
     }
 }
 
-function callApi(method, url, body, callback){
-    let xhr = new XMLHttpRequest();
-    xhr.open(method, url, true);
-    xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + access_token);
-    xhr.send(body);
-    xhr.onload = callback;
-}
 
-function handleApiResponse(){
-    if ( this.status == 200){
-        console.log(this.responseText);
-        setTimeout(currentlyPlaying, 2000);
-    }
-    else if ( this.status == 204 ){
-        setTimeout(currentlyPlaying, 2000);
-    }
-    else if ( this.status == 401 ){
-        refreshAccessToken()
-    }
-    else {
-        console.log(this.responseText);
-        alert(this.responseText);
-    }    
-}
+
+
+
+
 
 
 
